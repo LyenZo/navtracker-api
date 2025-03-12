@@ -10,9 +10,8 @@ const nodemailer = require('nodemailer');
 const cors = require('cors');
 
 const app = express();
-app.use(cors()); // Enable CORS for all origins
+app.use(cors()); 
 
-// OR: Allow only your frontend
 app.use(cors({
     origin: 'http://localhost:5173'
 }));
@@ -30,11 +29,11 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-//USUARIO
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//PUNTOS DE RUTA
 
-router.get('/usuario', (req, res) => {
-  connection.query('SELECT * FROM usuario', (err, results) => {
+router.get('/punto_ruta', (req, res) => {
+  connection.query('SELECT * FROM punto_ruta', (err, results) => {
       if (err) {
           console.error('Error al obtener registros:', err);
           return res.status(500).json({ error: 'Error al obtener registros' });
@@ -43,136 +42,39 @@ router.get('/usuario', (req, res) => {
   });
 });
 
-router.get('/usuario/:id_u', (req, res) => {
-  const id_u = req.params.id_u;
+router.get('/punto_ruta/:id_punto', (req, res) => {
+const id_punto = req.params.id_punto;
 
-  connection.query('SELECT * FROM usuario WHERE id_u = ?', [id_u], (err, results) => {
-      if (err) {
-          console.error('Error al obtener el registro:', err);
-          return res.status(500).json({ error: 'Error al obtener el registro' });
-      }
+connection.query('SELECT * FROM punto_ruta WHERE id_punto = ?', [id_punto], (err, results) => {
+    if (err) {
+        console.error('Error al obtener el registro:', err);
+        return res.status(500).json({ error: 'Error al obtener el registro' });
+    }
 
-      if (results.length === 0) {
-          return res.status(404).json({ error: 'Registro no encontrado' });
-      }
+    if (results.length === 0) {
+        return res.status(404).json({ error: 'Registro no encontrado' });
+    }
 
-      res.json(results[0]);
-  });
+    res.json(results[0]);
+});
 });
 
-router.post('/usuario', async (req, res) => {
-  try {
-      const { nombre, ap_pat, ap_mat, email, password, n_tel, id_tipo, id_vehiculo } = req.body;
-      //const hashedPassword = await bcrypt.hash(password, 10);
-      const hashedPassword = password;
-      const vehiculoFinal = id_tipo === "2" ? "1" : id_vehiculo;
-
-      const nuevoUsuario = { nombre, ap_pat, ap_mat, email, password: hashedPassword, n_tel, id_tipo, id_vehiculo: vehiculoFinal };
-
-      connection.query('INSERT INTO usuario SET ?', nuevoUsuario, (err, results) => {
-          if (err) {
-              console.error('Error al crear un nuevo registro:', err);
-              return res.status(500).json({ error: 'Error al crear un nuevo registro' });
-          }
-          res.status(201).json({ message: 'Registro creado exitosamente' });
-      });
-  } catch (error) {
-      console.error('Error en el registro:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+router.post('/punto_ruta', (req, res) => {
+const nuevoRegistro = req.body;
+connection.query('INSERT INTO punto_ruta SET ?', nuevoRegistro, (err, results) => {
+  if (err) {
+    console.error('Error al crear un nuevo registro:', err);
+    res.status(500).json({ error: 'Error al crear un nuevo registro' });
+    return;
   }
+  res.status(201).json({ message: 'Registro creado exitosamente' });
+});
 });
 
-router.put('/usuario/:id_u', async (req, res) => {
-  const id_u = req.params.id_u;
-  let datosActualizados = req.body;
-
-  try {
-    if (datosActualizados.contraseña) {
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(datosActualizados.contraseña, saltRounds);
-      datosActualizados.contraseña = hashedPassword; 
-    }
-
-    connection.query(
-      'UPDATE usuario SET ? WHERE id_u = ?',
-      [datosActualizados, id_u],
-      (err, results) => {
-        if (err) {
-          console.error('Error al actualizar el registro:', err);
-          return res.status(500).json({ error: 'Error al actualizar el registro' });
-        }
-        res.json({ message: 'Registro actualizado exitosamente' });
-      }
-    );
-  } catch (error) {
-    console.error('Error al hashear la contraseña:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
-
-router.delete('/usuario/:id_u', (req, res) => {
-  const id_u = req.params.id_u;
-  connection.query('DELETE FROM usuario WHERE id_u = ?', [id_u], (err, results) => {
-    if (err) {
-      console.error('Error al eliminar el registro:', err);
-      return res.status(500).json({ error: 'Error al eliminar el registro' });
-    }
-
-    if (results.affectedRows === 0) {
-      // No se encontró ningún registro con ese ID
-      return res.status(404).json({ error: 'Registro no encontrado' });
-    }
-
-    res.json({ message: 'Registro eliminado exitosamente' });
-  });
-});
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-//TIPO DE USUARIO
-
-router.get('/u_tipo', (req, res) => {
-  connection.query('SELECT * FROM u_tipo', (err, results) => {
-      if (err) {
-          console.error('Error al obtener registros:', err);
-          return res.status(500).json({ error: 'Error al obtener registros' });
-      }
-      res.json(results);
-  });
-});
-
-router.get('/u_tipo/:id_tipo', (req, res) => {
-  const id_tipo = req.params.id_tipo;
-
-  connection.query('SELECT * FROM u_tipo WHERE id_tipo = ?', [id_tipo], (err, results) => {
-      if (err) {
-          console.error('Error al obtener el registro:', err);
-          return res.status(500).json({ error: 'Error al obtener el registro' });
-      }
-
-      if (results.length === 0) {
-          return res.status(404).json({ error: 'Registro no encontrado' });
-      }
-
-      res.json(results[0]);
-  });
-});
-
-router.post('/u_tipo', (req, res) => {
-  const nuevoRegistro = req.body;
-  connection.query('INSERT INTO u_tipo SET ?', nuevoRegistro, (err, results) => {
-    if (err) {
-      console.error('Error al crear un nuevo registro:', err);
-      res.status(500).json({ error: 'Error al crear un nuevo registro' });
-      return;
-    }
-    res.status(201).json({ message: 'Registro creado exitosamente' });
-  });
-});
-
-router.put('/u_tipo/:id_tipo', (req, res) => {
-  const id_tipo = req.params.id_tipo;
+router.put('/punto_ruta/:id_punto', (req, res) => {
+  const id_punto = req.params.id_punto;
   const datosActualizados = req.body;
-  connection.query('UPDATE u_tipo SET ? WHERE id_tipo = ?', [datosActualizados, id_tipo], (err, results) => {
+  connection.query('UPDATE punto_ruta SET ? WHERE id_punto = ?', [datosActualizados, id_punto], (err, results) => {
     if (err) {
       console.error('Error al actualizar el registro:', err);
       res.status(500).json({ error: 'Error al actualizar el registro' });
@@ -182,154 +84,9 @@ router.put('/u_tipo/:id_tipo', (req, res) => {
   });
 });
 
-router.delete('/u_tipo/:id_tipo', (req, res) => {
-  const id_tipo = req.params.id_tipo;
-  connection.query('DELETE FROM u_tipo WHERE id_tipo = ?', [id_tipo], (err, results) => {
-    if (err) {
-      console.error('Error al eliminar el registro:', err);
-      return res.status(500).json({ error: 'Error al eliminar el registro' });
-    }
-
-    if (results.affectedRows === 0) {
-      // No se encontró ningún registro con ese ID
-      return res.status(404).json({ error: 'Registro no encontrado' });
-    }
-
-    res.json({ message: 'Registro eliminado exitosamente' });
-  });
-});
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-//VEHICULO
-
-router.get('/vehiculo', (req, res) => {
-  connection.query('SELECT * FROM vehiculo', (err, results) => {
-      if (err) {
-          console.error('Error al obtener registros:', err);
-          return res.status(500).json({ error: 'Error al obtener registros' });
-      }
-      res.json(results);
-  });
-});
-
-router.get('/vehiculo/:id_vehiculo', (req, res) => {
-  const id_vehiculo = req.params.id_vehiculo;
-
-  connection.query('SELECT * FROM vehiculo WHERE id_vehiculo = ?', [id_vehiculo], (err, results) => {
-      if (err) {
-          console.error('Error al obtener el registro:', err);
-          return res.status(500).json({ error: 'Error al obtener el registro' });
-      }
-
-      if (results.length === 0) {
-          return res.status(404).json({ error: 'Registro no encontrado' });
-      }
-
-      res.json(results[0]);
-  });
-});
-
-router.post('/vehiculo', (req, res) => {
-  const nuevoRegistro = req.body;
-  connection.query('INSERT INTO vehiculo SET ?', nuevoRegistro, (err, results) => {
-    if (err) {
-      console.error('Error al crear un nuevo registro:', err);
-      res.status(500).json({ error: 'Error al crear un nuevo registro' });
-      return;
-    }
-    res.status(201).json({ message: 'Registro creado exitosamente' });
-  });
-});
-
-router.put('/vehiculo/:id_vehiculo', (req, res) => {
-  const id_vehiculo = req.params.id_vehiculo;
-  const datosActualizados = req.body;
-  connection.query('UPDATE vehiculo SET ? WHERE id_vehiculo = ?', [datosActualizados, id_vehiculo], (err, results) => {
-    if (err) {
-      console.error('Error al actualizar el registro:', err);
-      res.status(500).json({ error: 'Error al actualizar el registro' });
-      return;
-    }
-    res.json({ message: 'Registro actualizado exitosamente' });
-  });
-});
-
-router.delete('/vehiculo/:id_vehiculo', (req, res) => {
-  const id_vehiculo = req.params.id_vehiculo;
-  connection.query('DELETE FROM vehiculo WHERE id_vehiculo = ?', [id_vehiculo], (err, results) => {
-    if (err) {
-      console.error('Error al eliminar el registro:', err);
-      return res.status(500).json({ error: 'Error al eliminar el registro' });
-    }
-
-    if (results.affectedRows === 0) {
-      
-      return res.status(404).json({ error: 'Registro no encontrado' });
-    }
-
-    res.json({ message: 'Registro eliminado exitosamente' });
-  });
-});
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-//RUTA
-
-router.get('/ruta', (req, res) => {
-  connection.query('SELECT * FROM ruta', (err, results) => {
-      if (err) {
-          console.error('Error al obtener registros:', err);
-          return res.status(500).json({ error: 'Error al obtener registros' });
-      }
-      res.json(results);
-  });
-});
-
-router.get('/ruta/:id_ruta', (req, res) => {
-  const id_ruta = req.params.id_ruta;
-
-  connection.query('SELECT * FROM ruta WHERE id_ruta = ?', [id_ruta], (err, results) => {
-      if (err) {
-          console.error('Error al obtener el registro:', err);
-          return res.status(500).json({ error: 'Error al obtener el registro' });
-      }
-
-      if (results.length === 0) {
-          return res.status(404).json({ error: 'Registro no encontrado' });
-      }
-
-      res.json(results[0]);
-  });
-});
-
-router.post('/ruta', (req, res) => {
-  const nuevoRegistro = req.body;
-  connection.query('INSERT INTO ruta SET ?', nuevoRegistro, (err, results) => {
-    if (err) {
-      console.error('Error al crear un nuevo registro:', err);
-      res.status(500).json({ error: 'Error al crear un nuevo registro' });
-      return;
-    }
-    res.status(201).json({ message: 'Registro creado exitosamente' });
-  });
-});
-
-router.put('/ruta/:id_ruta', (req, res) => {
-  const id_ruta = req.params.id_ruta;
-  const datosActualizados = req.body;
-  connection.query('UPDATE ruta SET ? WHERE id_ruta = ?', [datosActualizados, id_ruta], (err, results) => {
-    if (err) {
-      console.error('Error al actualizar el registro:', err);
-      res.status(500).json({ error: 'Error al actualizar el registro' });
-      return;
-    }
-    res.json({ message: 'Registro actualizado exitosamente' });
-  });
-});
-
-
-router.delete('/ruta/:id_ruta', (req, res) => {
-  const id_ruta = req.params.id_ruta;
-  connection.query('DELETE FROM ruta WHERE id_ruta = ?', [id_ruta], (err, results) => {
+router.delete('/punto_ruta/:id_punto', (req, res) => {
+  const id_punto = req.params.id_punto;
+  connection.query('DELETE FROM punto_ruta WHERE id_punto = ?', [id_punto], (err, results) => {
     if (err) {
       console.error('Error al eliminar el registro:', err);
       return res.status(500).json({ error: 'Error al eliminar el registro' });
@@ -409,7 +166,6 @@ router.delete('/rastreo/:id_rastreo', (req, res) => {
     }
 
     if (results.affectedRows === 0) {
-      // No se encontró ningún registro con ese ID
       return res.status(404).json({ error: 'Registro no encontrado' });
     }
 
@@ -418,22 +174,22 @@ router.delete('/rastreo/:id_rastreo', (req, res) => {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-//PUNTOS DE RUTA
+//RUTA
 
-router.get('/punto_ruta', (req, res) => {
-    connection.query('SELECT * FROM punto_ruta', (err, results) => {
-        if (err) {
-            console.error('Error al obtener registros:', err);
-            return res.status(500).json({ error: 'Error al obtener registros' });
-        }
-        res.json(results);
-    });
+router.get('/ruta', (req, res) => {
+  connection.query('SELECT * FROM ruta', (err, results) => {
+      if (err) {
+          console.error('Error al obtener registros:', err);
+          return res.status(500).json({ error: 'Error al obtener registros' });
+      }
+      res.json(results);
+  });
 });
 
-router.get('/punto_ruta/:id_punto', (req, res) => {
-  const id_punto = req.params.id_punto;
+router.get('/ruta/:id_ruta', (req, res) => {
+  const id_ruta = req.params.id_ruta;
 
-  connection.query('SELECT * FROM punto_ruta WHERE id_punto = ?', [id_punto], (err, results) => {
+  connection.query('SELECT * FROM ruta WHERE id_ruta = ?', [id_ruta], (err, results) => {
       if (err) {
           console.error('Error al obtener el registro:', err);
           return res.status(500).json({ error: 'Error al obtener el registro' });
@@ -447,9 +203,9 @@ router.get('/punto_ruta/:id_punto', (req, res) => {
   });
 });
 
-router.post('/punto_ruta', (req, res) => {
+router.post('/ruta', (req, res) => {
   const nuevoRegistro = req.body;
-  connection.query('INSERT INTO punto_ruta SET ?', nuevoRegistro, (err, results) => {
+  connection.query('INSERT INTO ruta SET ?', nuevoRegistro, (err, results) => {
     if (err) {
       console.error('Error al crear un nuevo registro:', err);
       res.status(500).json({ error: 'Error al crear un nuevo registro' });
@@ -459,35 +215,279 @@ router.post('/punto_ruta', (req, res) => {
   });
 });
 
-  router.put('/punto_ruta/:id_punto', (req, res) => {
-    const id_punto = req.params.id_punto;
-    const datosActualizados = req.body;
-    connection.query('UPDATE punto_ruta SET ? WHERE id_punto = ?', [datosActualizados, id_punto], (err, results) => {
-      if (err) {
-        console.error('Error al actualizar el registro:', err);
-        res.status(500).json({ error: 'Error al actualizar el registro' });
-        return;
-      }
-      res.json({ message: 'Registro actualizado exitosamente' });
-    });
+router.put('/ruta/:id_ruta', (req, res) => {
+  const id_ruta = req.params.id_ruta;
+  const datosActualizados = req.body;
+  connection.query('UPDATE ruta SET ? WHERE id_ruta = ?', [datosActualizados, id_ruta], (err, results) => {
+    if (err) {
+      console.error('Error al actualizar el registro:', err);
+      res.status(500).json({ error: 'Error al actualizar el registro' });
+      return;
+    }
+    res.json({ message: 'Registro actualizado exitosamente' });
   });
+});
 
-  router.delete('/punto_ruta/:id_punto', (req, res) => {
-    const id_punto = req.params.id_punto;
-    connection.query('DELETE FROM punto_ruta WHERE id_punto = ?', [id_punto], (err, results) => {
-      if (err) {
-        console.error('Error al eliminar el registro:', err);
-        return res.status(500).json({ error: 'Error al eliminar el registro' });
-      }
-  
-      if (results.affectedRows === 0) {
-        // No se encontró ningún registro con ese ID
-        return res.status(404).json({ error: 'Registro no encontrado' });
-      }
-  
-      res.json({ message: 'Registro eliminado exitosamente' });
-    });
+
+router.delete('/ruta/:id_ruta', (req, res) => {
+  const id_ruta = req.params.id_ruta;
+  connection.query('DELETE FROM ruta WHERE id_ruta = ?', [id_ruta], (err, results) => {
+    if (err) {
+      console.error('Error al eliminar el registro:', err);
+      return res.status(500).json({ error: 'Error al eliminar el registro' });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+
+    res.json({ message: 'Registro eliminado exitosamente' });
   });
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//TIPO DE USUARIO
+
+router.get('/u_tipo', (req, res) => {
+  connection.query('SELECT * FROM u_tipo', (err, results) => {
+      if (err) {
+          console.error('Error al obtener registros:', err);
+          return res.status(500).json({ error: 'Error al obtener registros' });
+      }
+      res.json(results);
+  });
+});
+
+router.get('/u_tipo/:id_tipo', (req, res) => {
+  const id_tipo = req.params.id_tipo;
+
+  connection.query('SELECT * FROM u_tipo WHERE id_tipo = ?', [id_tipo], (err, results) => {
+      if (err) {
+          console.error('Error al obtener el registro:', err);
+          return res.status(500).json({ error: 'Error al obtener el registro' });
+      }
+
+      if (results.length === 0) {
+          return res.status(404).json({ error: 'Registro no encontrado' });
+      }
+
+      res.json(results[0]);
+  });
+});
+
+router.post('/u_tipo', (req, res) => {
+  const nuevoRegistro = req.body;
+  connection.query('INSERT INTO u_tipo SET ?', nuevoRegistro, (err, results) => {
+    if (err) {
+      console.error('Error al crear un nuevo registro:', err);
+      res.status(500).json({ error: 'Error al crear un nuevo registro' });
+      return;
+    }
+    res.status(201).json({ message: 'Registro creado exitosamente' });
+  });
+});
+
+router.put('/u_tipo/:id_tipo', (req, res) => {
+  const id_tipo = req.params.id_tipo;
+  const datosActualizados = req.body;
+  connection.query('UPDATE u_tipo SET ? WHERE id_tipo = ?', [datosActualizados, id_tipo], (err, results) => {
+    if (err) {
+      console.error('Error al actualizar el registro:', err);
+      res.status(500).json({ error: 'Error al actualizar el registro' });
+      return;
+    }
+    res.json({ message: 'Registro actualizado exitosamente' });
+  });
+});
+
+router.delete('/u_tipo/:id_tipo', (req, res) => {
+  const id_tipo = req.params.id_tipo;
+  connection.query('DELETE FROM u_tipo WHERE id_tipo = ?', [id_tipo], (err, results) => {
+    if (err) {
+      console.error('Error al eliminar el registro:', err);
+      return res.status(500).json({ error: 'Error al eliminar el registro' });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+
+    res.json({ message: 'Registro eliminado exitosamente' });
+  });
+});
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//USUARIO
+
+router.get('/usuario', (req, res) => {
+  connection.query('SELECT * FROM usuario', (err, results) => {
+      if (err) {
+          console.error('Error al obtener registros:', err);
+          return res.status(500).json({ error: 'Error al obtener registros' });
+      }
+      res.json(results);
+  });
+});
+
+router.get('/usuario/:id_u', (req, res) => {
+  const id_u = req.params.id_u;
+
+  connection.query('SELECT * FROM usuario WHERE id_u = ?', [id_u], (err, results) => {
+      if (err) {
+          console.error('Error al obtener el registro:', err);
+          return res.status(500).json({ error: 'Error al obtener el registro' });
+      }
+
+      if (results.length === 0) {
+          return res.status(404).json({ error: 'Registro no encontrado' });
+      }
+
+      res.json(results[0]);
+  });
+});
+
+router.post('/usuario', async (req, res) => {
+  try {
+      const { nombre, ap_pat, ap_mat, email, password, n_tel, id_tipo, id_vehiculo } = req.body;
+      const hashedPassword = await bcrypt.hash(password, 10);
+      //const hashedPassword = password;
+      const vehiculoFinal = id_tipo === "2" ? "1" : id_vehiculo;
+
+      const nuevoUsuario = { nombre, ap_pat, ap_mat, email, password: hashedPassword, n_tel, id_tipo, id_vehiculo: vehiculoFinal };
+
+      connection.query('INSERT INTO usuario SET ?', nuevoUsuario, (err, results) => {
+          if (err) {
+              console.error('Error al crear un nuevo registro:', err);
+              return res.status(500).json({ error: 'Error al crear un nuevo registro' });
+          }
+          res.status(201).json({ message: 'Registro creado exitosamente' });
+      });
+  } catch (error) {
+      console.error('Error en el registro:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+router.put('/usuario/:id_u', async (req, res) => {
+  const id_u = req.params.id_u;
+  let datosActualizados = req.body;
+
+  try {
+    if (datosActualizados.contraseña) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(datosActualizados.contraseña, saltRounds);
+      datosActualizados.contraseña = hashedPassword; 
+    }
+
+    connection.query(
+      'UPDATE usuario SET ? WHERE id_u = ?',
+      [datosActualizados, id_u],
+      (err, results) => {
+        if (err) {
+          console.error('Error al actualizar el registro:', err);
+          return res.status(500).json({ error: 'Error al actualizar el registro' });
+        }
+        res.json({ message: 'Registro actualizado exitosamente' });
+      }
+    );
+  } catch (error) {
+    console.error('Error al hashear la contraseña:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+router.delete('/usuario/:id_u', (req, res) => {
+  const id_u = req.params.id_u;
+  connection.query('DELETE FROM usuario WHERE id_u = ?', [id_u], (err, results) => {
+    if (err) {
+      console.error('Error al eliminar el registro:', err);
+      return res.status(500).json({ error: 'Error al eliminar el registro' });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+
+    res.json({ message: 'Registro eliminado exitosamente' });
+  });
+});
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//VEHICULO
+
+router.get('/vehiculo', (req, res) => {
+  connection.query('SELECT * FROM vehiculo', (err, results) => {
+      if (err) {
+          console.error('Error al obtener registros:', err);
+          return res.status(500).json({ error: 'Error al obtener registros' });
+      }
+      res.json(results);
+  });
+});
+
+router.get('/vehiculo/:id_vehiculo', (req, res) => {
+  const id_vehiculo = req.params.id_vehiculo;
+
+  connection.query('SELECT * FROM vehiculo WHERE id_vehiculo = ?', [id_vehiculo], (err, results) => {
+      if (err) {
+          console.error('Error al obtener el registro:', err);
+          return res.status(500).json({ error: 'Error al obtener el registro' });
+      }
+
+      if (results.length === 0) {
+          return res.status(404).json({ error: 'Registro no encontrado' });
+      }
+
+      res.json(results[0]);
+  });
+});
+
+router.post('/vehiculo', (req, res) => {
+  const nuevoRegistro = req.body;
+  connection.query('INSERT INTO vehiculo SET ?', nuevoRegistro, (err, results) => {
+    if (err) {
+      console.error('Error al crear un nuevo registro:', err);
+      res.status(500).json({ error: 'Error al crear un nuevo registro' });
+      return;
+    }
+    res.status(201).json({ message: 'Registro creado exitosamente' });
+  });
+});
+
+router.put('/vehiculo/:id_vehiculo', (req, res) => {
+  const id_vehiculo = req.params.id_vehiculo;
+  const datosActualizados = req.body;
+  connection.query('UPDATE vehiculo SET ? WHERE id_vehiculo = ?', [datosActualizados, id_vehiculo], (err, results) => {
+    if (err) {
+      console.error('Error al actualizar el registro:', err);
+      res.status(500).json({ error: 'Error al actualizar el registro' });
+      return;
+    }
+    res.json({ message: 'Registro actualizado exitosamente' });
+  });
+});
+
+router.delete('/vehiculo/:id_vehiculo', (req, res) => {
+  const id_vehiculo = req.params.id_vehiculo;
+  connection.query('DELETE FROM vehiculo WHERE id_vehiculo = ?', [id_vehiculo], (err, results) => {
+    if (err) {
+      console.error('Error al eliminar el registro:', err);
+      return res.status(500).json({ error: 'Error al eliminar el registro' });
+    }
+
+    if (results.affectedRows === 0) {
+      
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+    res.json({ message: 'Registro eliminado exitosamente' });
+  });
+});
+
+
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //LOGIN
