@@ -158,7 +158,7 @@ router.put('/rastreo/:id_rastreo', (req, res) => {
 
 
 router.delete('/rastreo/:id_rastreo', (req, res) => {
-  const id_ruta = req.params.id_ruta;
+  const id_rastreo = req.params.id_rastreo;
   connection.query('DELETE FROM rastreo WHERE id_rastreo = ?', [id_rastreo], (err, results) => {
     if (err) {
       console.error('Error al eliminar el registro:', err);
