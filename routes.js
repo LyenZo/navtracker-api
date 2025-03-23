@@ -616,6 +616,104 @@ router.get('/perfil', authenticateToken, (req, res) => {
     });
 });
 
+/////////////////////////////////////////////////////////////////////////////////////////////77
+//GPS
+router.post('/gps', (req, res) => {
+  const { latitud, longitud, altitud, velocidad} = req.body;
 
+  // Preparar los datos para insertar en la tabla rastreo
+  const nuevoGPS = {
+      latitud,
+      longitud,
+      altitud,
+      velocidad
+  };
+
+  // Insertar en la base de datos
+  connection.query('INSERT INTO gps SET ?', nuevoGPS, (err, results) => {
+      if (err) {
+          console.error('Error al registrar rastreo:', err);
+          return res.status(500).json({ error: 'Error al registrar los datos del rastreo' });
+      }
+      res.status(201).json({ message: 'Rastreo registrado exitosamente' });
+  });
+});
+
+router.put('/gps/:id_gps', (req, res) => {
+  const { id_gps } = req.params;  // Obtener el ID de la URL
+  const { latitud, longitud, altitud, velocidad } = req.body;
+
+  // Preparar los datos para actualizar en la tabla rastreo
+  const updatedGPS = {
+    latitud,
+    longitud,
+    altitud,
+    velocidad
+  };
+
+  // Actualizar en la base de datos el registro con el ID especificado
+  connection.query(
+    'UPDATE gps SET ? WHERE id_gps = ?', 
+    [updatedGPS, id_gps],  // El primer parámetro es el objeto con los nuevos valores, el segundo es el ID
+    (err, results) => {
+      if (err) {
+        console.error('Error al actualizar rastreo:', err);
+        return res.status(500).json({ error: 'Error al actualizar los datos del rastreo' });
+      }
+
+      if (results.affectedRows === 0) {
+        // Si no se actualizó ningún registro, puede ser que el ID no exista
+        return res.status(404).json({ error: 'No se encontró el rastreo con el ID especificado' });
+      }
+
+      res.status(200).json({ message: 'Rastreo actualizado exitosamente' });
+    }
+  );
+});
+
+router.get('/gps', (req, res) => {
+  connection.query('SELECT * FROM gps', (err, results) => {
+      if (err) {
+          console.error('Error al obtener registros:', err);
+          return res.status(500).json({ error: 'Error al obtener registros' });
+      }
+      res.json(results);
+  });
+});
+
+router.get('/gps/:id_gps', (req, res) => {
+  const id_gps = req.params.id_gps;
+
+  connection.query('SELECT * FROM gps WHERE id_gps = ?', [id_gps], (err, results) => {
+      if (err) {
+          console.error('Error al obtener el registro:', err);
+          return res.status(500).json({ error: 'Error al obtener el registro' });
+      }
+
+      if (results.length === 0) {
+          return res.status(404).json({ error: 'Registro no encontrado' });
+      }
+
+      res.json(results[0]);
+  });
+});
+
+
+
+router.delete('/gps/:id_gps', (req, res) => {
+  const id_vehiculo = req.params.id_vehiculo;
+  connection.query('DELETE FROM gps WHERE id_gps = ?', [id_gps], (err, results) => {
+    if (err) {
+      console.error('Error al eliminar el registro:', err);
+      return res.status(500).json({ error: 'Error al eliminar el registro' });
+    }
+
+    if (results.affectedRows === 0) {
+      
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+    res.json({ message: 'Registro eliminado exitosamente' });
+  });
+});
 
 module.exports = router;
