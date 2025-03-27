@@ -505,16 +505,11 @@ router.post('/login', async (req, res) => {
         }
 
         const usuario = results[0];
-
-        console.log("🔹 Usuario encontrado:", usuario.email);
-        console.log("🔹 Contraseña ingresada:", password);
-        console.log("🔹 Contraseña almacenada:", usuario.password);
         const passwordCorrecta = await bcrypt.compare(password, usuario.password);
 
         console.log("🔹 ¿Coincide la contraseña?", passwordCorrecta);
 
         if (!passwordCorrecta) {
-            console.log("Contraseña incorrecta");
             return res.status(401).json({ error: 'Credenciales incorrectas' });
         }
 
